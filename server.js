@@ -1,30 +1,28 @@
 const express = require('express');
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-const fs = require('fs');
 
 puppeteer.use(StealthPlugin());
 
 const app = express();
+// Railway automatically PORT assign karta hai, isliye process.env.PORT zaroori hai
 const PORT = process.env.PORT || 8080;
 
 let browserInstance = null;
 
 async function getBrowser() {
     if (!browserInstance || !browserInstance.connected) {
-        console.log("🌐 Launching Browser (Auto-Download Mode)...");
-        
+        console.log("🌐 Launching Browser (Railway Stable Mode)...");
         browserInstance = await puppeteer.launch({
             headless: "new",
-            // Humne executablePath poora hata diya hai! 
-            // Ab ye Puppeteer ke internal downloaded browser ko use karega.
             args: [
-                '--no-sandbox', 
-                '--disable-setuid-sandbox', 
-                '--disable-dev-shm-usage', 
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
                 '--single-process',
                 '--no-zygote'
             ]
+            // Note: executablePath hata diya hai taaki Puppeteer apna downloaded browser use kare
         });
     }
     return browserInstance;
@@ -51,12 +49,10 @@ app.get('/vgplay', async (req, res) => {
         await page.setRequestInterception(true);
         page.on('request', (request) => {
             const url = request.url();
-            const type = request.resourceType();
-
             if (url.includes('.m3u8')) {
                 cdnLinks.add(url);
                 request.continue();
-            } else if (['image', 'font', 'media'].includes(type) || url.includes('google-analytics')) {
+            } else if (['image', 'font', 'media'].includes(request.resourceType()) || url.includes('google-analytics')) {
                 request.abort();
             } else {
                 request.continue();
@@ -68,18 +64,27 @@ app.get('/vgplay', async (req, res) => {
 
         console.log(`📡 Sniping: ${finalTarget}`);
         
-        await page.goto(finalTarget, { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
+        // Railway par 'networkidle2' use karna better hai taaki scripts load ho jayein
+        await page.goto(finalTarget, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
+
+        // Page load hone ke baad thoda aur intezar (Vekna sites ke liye)
+        await new Promise(r => setTimeout(r, 2000));
 
         let attempts = 0;
-        const maxAttempts = 15; 
+        const maxAttempts = 12; // Zyada attempts taaki link miss na ho
 
         while (cdnLinks.size === 0 && attempts < maxAttempts) {
+            console.log(`Attempt ${attempts + 1}: Clicking play buttons...`);
             await page.evaluate(() => {
-                const btn = document.querySelector('.vjs-big-play-button, #play, video, .play_button');
-                if (btn) btn.click();
+                const selectors = ['.vjs-big-play-button', '#play', 'video', '.play_button', '.vjs-tech'];
+                selectors.forEach(s => {
+                    const el = document.querySelector(s);
+                    if (el) el.click();
+                });
             }).catch(() => {});
 
-            await new Promise(r => setTimeout(r, 500));
+            // Railway ke liye delay thoda zyada (1 second)
+            await new Promise(r => setTimeout(r, 1000));
             attempts++;
             if (cdnLinks.size > 0) break;
         }
@@ -94,15 +99,16 @@ app.get('/vgplay', async (req, res) => {
                 all_links: linksArray.map(l => `${l}|Referer=${mainReferer}`)
             });
         } else {
-            res.json({ success: false, message: "Link nahi mila." });
+            res.json({ success: false, message: "Link nahi mila (Timeout)." });
         }
 
     } catch (e) {
-        console.error("❌ Error:", e.message);
+        console.error("Error:", e.message);
         res.status(500).json({ success: false, error: e.message });
     } finally {
         if (page) await page.close();
     }
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server Ready on Port ${PORT}`));
+// Port 0.0.0.0 bind karna Railway ke liye compulsory hai
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server Ready on http://0.0.0.0:${PORT}`));
