@@ -1,40 +1,30 @@
 const express = require('express');
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const fs = require('fs');
 
 puppeteer.use(StealthPlugin());
 
 const app = express();
-// Railway apna port khud assign karta hai, isliye process.env.PORT zaroori hai
 const PORT = process.env.PORT || 8080;
 
 let browserInstance = null;
 
 async function getBrowser() {
     if (!browserInstance || !browserInstance.connected) {
-        console.log("🌐 Launching Browser...");
+        console.log("🌐 Launching Browser (Auto-Download Mode)...");
         
-        // Railway par ye 2 paths sabse common hain
-        const paths = [
-            process.env.PUPPETEER_EXECUTABLE_PATH,
-            '/usr/bin/google-chrome-stable',
-            '/usr/bin/chromium',
-            '/usr/bin/chromium-browser'
-        ];
-
-        let executablePath = null;
-        const fs = require('fs');
-        for (const p of paths) {
-            if (p && fs.existsSync(p)) {
-                executablePath = p;
-                break;
-            }
-        }
-
         browserInstance = await puppeteer.launch({
             headless: "new",
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process'],
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium' 
+            // Humne executablePath poora hata diya hai! 
+            // Ab ye Puppeteer ke internal downloaded browser ko use karega.
+            args: [
+                '--no-sandbox', 
+                '--disable-setuid-sandbox', 
+                '--disable-dev-shm-usage', 
+                '--single-process',
+                '--no-zygote'
+            ]
         });
     }
     return browserInstance;
@@ -53,7 +43,6 @@ app.get('/vgplay', async (req, res) => {
 
     let page;
     try {
-
         const browser = await getBrowser();
         page = await browser.newPage();
 
@@ -79,10 +68,10 @@ app.get('/vgplay', async (req, res) => {
 
         console.log(`📡 Sniping: ${finalTarget}`);
         
-        await page.goto(finalTarget, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+        await page.goto(finalTarget, { waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {});
 
         let attempts = 0;
-        const maxAttempts = 20; 
+        const maxAttempts = 15; 
 
         while (cdnLinks.size === 0 && attempts < maxAttempts) {
             await page.evaluate(() => {
@@ -90,7 +79,7 @@ app.get('/vgplay', async (req, res) => {
                 if (btn) btn.click();
             }).catch(() => {});
 
-            await new Promise(r => setTimeout(r, 250));
+            await new Promise(r => setTimeout(r, 500));
             attempts++;
             if (cdnLinks.size > 0) break;
         }
@@ -109,11 +98,11 @@ app.get('/vgplay', async (req, res) => {
         }
 
     } catch (e) {
+        console.error("❌ Error:", e.message);
         res.status(500).json({ success: false, error: e.message });
     } finally {
         if (page) await page.close();
     }
 });
 
-// Railway par listen karne ke liye 0.0.0.0 bind karna zaroori hai
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Singleton Ace-Fast Ready: http://localhost:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server Ready on Port ${PORT}`));

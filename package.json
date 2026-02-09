@@ -9,9 +9,6 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "puppeteer": {
-    "skipChromiumDownload": true
-  },
   "author": "DevPlay",
   "license": "ISC",
   "dependencies": {
