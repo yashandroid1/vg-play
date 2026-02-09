@@ -6,7 +6,7 @@ puppeteer.use(StealthPlugin());
 
 const app = express();
 // Railway apna port khud assign karta hai, isliye process.env.PORT zaroori hai
-//const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 let browserInstance = null;
 
@@ -30,7 +30,7 @@ async function getBrowser() {
     return browserInstance;
 }
 
-app.get('/extract', async (req, res) => {
+app.get('/vgplay', async (req, res) => {
     const fileId = req.query.id;
     const targetUrl = req.query.url;
     const mainReferer = "https://dotmovies.band/";
@@ -43,6 +43,7 @@ app.get('/extract', async (req, res) => {
 
     let page;
     try {
+
         const browser = await getBrowser();
         page = await browser.newPage();
 
