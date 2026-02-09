@@ -1,6 +1,9 @@
-[variables]
-    NIXPACKS_PKGS = "nodejs chromium"
-    PUPPETEER_EXECUTABLE_PATH = "/usr/bin/google-chrome-stable"
-
 [phases.setup]
-    nixPkgs = ["nodejs", "chromium"]
+nixPkgs = ["nodejs", "chromium"]
+
+[phases.build]
+cmds = ["npm install"]
+
+[variables]
+NIXPACKS_PKGS = "nodejs chromium"
+PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium"
