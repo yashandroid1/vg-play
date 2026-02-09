@@ -1,0 +1,17 @@
+{
+  "name": "devplay",
+  "version": "1.0.0",
+  "description": "vega video process ",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "DevPlay",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1",
+    "puppeteer": "^24.37.2",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}
