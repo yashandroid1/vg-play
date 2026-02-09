@@ -12,19 +12,29 @@ let browserInstance = null;
 
 async function getBrowser() {
     if (!browserInstance || !browserInstance.connected) {
-        console.log("🌐 Launching New Browser Instance on Railway...");
+        console.log("🌐 Launching Browser...");
+        
+        // Railway par ye 2 paths sabse common hain
+        const paths = [
+            process.env.PUPPETEER_EXECUTABLE_PATH,
+            '/usr/bin/google-chrome-stable',
+            '/usr/bin/chromium',
+            '/usr/bin/chromium-browser'
+        ];
+
+        let executablePath = null;
+        const fs = require('fs');
+        for (const p of paths) {
+            if (p && fs.existsSync(p)) {
+                executablePath = p;
+                break;
+            }
+        }
+
         browserInstance = await puppeteer.launch({
             headless: "new",
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-gpu',
-                '--single-process',
-                '--no-zygote' // Ye line add ki hai stability ke liye
-            ],
-            // Is line ko aise likho:
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable' 
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process'],
+            executablePath: executablePath || '/usr/bin/google-chrome-stable' 
         });
     }
     return browserInstance;

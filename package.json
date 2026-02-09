@@ -1,10 +1,16 @@
 {
   "name": "devplay",
   "version": "1.0.0",
-  "description": "vega video process ",
+  "description": "vega video process",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "puppeteer": {
+    "skipChromiumDownload": true
   },
   "author": "DevPlay",
   "license": "ISC",
