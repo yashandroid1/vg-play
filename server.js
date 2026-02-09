@@ -6,7 +6,7 @@ puppeteer.use(StealthPlugin());
 
 const app = express();
 // Railway apna port khud assign karta hai, isliye process.env.PORT zaroori hai
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 let browserInstance = null;
 
@@ -15,16 +15,16 @@ async function getBrowser() {
         console.log("🌐 Launching New Browser Instance on Railway...");
         browserInstance = await puppeteer.launch({
             headless: "new",
-            // Railway/Linux par ye args compulsory hain
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-gpu',
-                '--single-process' 
+                '--single-process',
+                '--no-zygote' // Ye line add ki hai stability ke liye
             ],
-            // Railway par Chromium yahan hota hai (agar Nixpacks use kar rahe ho)
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null 
+            // Is line ko aise likho:
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable' 
         });
     }
     return browserInstance;
