@@ -34,7 +34,7 @@ async function getBrowser() {
         browserInstance = await puppeteer.launch({
             headless: "new",
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process'],
-            executablePath: executablePath || '/usr/bin/google-chrome-stable' 
+            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium' 
         });
     }
     return browserInstance;
